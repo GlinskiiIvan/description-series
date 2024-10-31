@@ -83,16 +83,16 @@ for series_uid, file_list in series_data.items():
         magnetic_field_strength = getattr(ds, 'MagneticFieldStrength', 'N/A')  # Значение поля, Т
 
         data.append({
-            'Folder Name': folder_name,
-            'File Path': file_path,
-            'Study Date': study_date,
-            'Series Number': series_number,
-            'Number of Images in Series': len(file_list),
-            'Series Description': series_description,
-            'Image Orientation': slice_orientation,
-            'Modality': modality,
-            'Slice Thickness': slice_thickness,
-            'Magnetic Field Strength (T)': magnetic_field_strength,
+            'Название папки': folder_name,
+            'Расположение снимка (путь)': file_path,
+            'Дата снимка': study_date,
+            'Номер серии': series_number,
+            'Количество серии': len(file_list),
+            'Название МРТ снимка': series_description,
+            'Использование плоскостей': slice_orientation,
+            'Режим визуализации (Т1, Т2 и др.)': modality,
+            'Толщина среза, Т': slice_thickness,
+            'Значение поля (T)': magnetic_field_strength,
         })
     except Exception as e:
         print(f"Ошибка при обработке {first_file}: {e}")
