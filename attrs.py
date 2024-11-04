@@ -1,6 +1,6 @@
 import pydicom
 
-ds = pydicom.dcmread('/home/brodyga/Загрузки/0001. Абдибеков/20231225/S_29535/139373/1393730007.dcm')
+ds = pydicom.dcmread('/home/brodyga/Загрузки/test/0001. Абдибеков/20231225/S_29535/139373/1393730007.dcm')
 # print(dir(ds))
 
 # for element in ds:
