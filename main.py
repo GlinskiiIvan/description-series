@@ -167,7 +167,7 @@ def process_dicom_files(directories, output_excel='dicom_info.xlsx', output_dir=
 
                 print('Обрабатывается: ', file_path)
 
-                if not('knee' in body_part) and not('knee' in study_description):
+                if not('knee' in body_part) and not('ankle' in body_part) and not('knee' in study_description) and not('ks' in study_description) and not('kolen' in study_description):
                     data.append({
                         'Название папки': folder_name,
                         'Расположение снимка (путь)': file_path,
