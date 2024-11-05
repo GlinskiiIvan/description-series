@@ -5,6 +5,7 @@ from datetime import datetime
 from collections import defaultdict
 from PIL import Image
 import numpy as np
+from datetime import datetime
 
 # Укажите директорию с DICOM-файлами
 output_excel = 'dicom_info.xlsx'
@@ -166,20 +167,36 @@ def process_dicom_files(directories, output_excel='dicom_info.xlsx', output_dir=
 
                 print('Обрабатывается: ', file_path)
 
-                data.append({
-                    'Название папки': folder_name,
-                    'Расположение снимка (путь)': file_path,
-                    'Дата снимка': study_date,
-                    # 'Номер серии': series_number,
-                    'Количество серии': len(file_list),
-                    'Название МРТ снимка': series_description,
-                    'Использование плоскостей': slice_orientation,
-                    'Режим визуализации (Т1, Т2 и др.)': modality,
-                    'Толщина среза, Т': slice_thickness,
-                    'Значение поля (T)': magnetic_field_strength,
-                    'body_part': body_part,
-                    'study_description': study_description,
-                })
+                if not('knee' in body_part) and not('knee' in study_description):
+                    data.append({
+                        'Название папки': folder_name,
+                        'Расположение снимка (путь)': file_path,
+                        'Дата снимка': study_date,
+                        # 'Номер серии': series_number,
+                        'Количество серии': len(file_list),
+                        'Название МРТ снимка': series_description,
+                        'Использование плоскостей': slice_orientation,
+                        'Режим визуализации (Т1, Т2 и др.)': modality,
+                        'Толщина среза, Т': slice_thickness,
+                        'Значение поля (T)': magnetic_field_strength,
+                        'body_part': body_part,
+                        'study_description': study_description,
+                    })
+
+                # data.append({
+                #     'Название папки': folder_name,
+                #     'Расположение снимка (путь)': file_path,
+                #     'Дата снимка': study_date,
+                #     # 'Номер серии': series_number,
+                #     'Количество серии': len(file_list),
+                #     'Название МРТ снимка': series_description,
+                #     'Использование плоскостей': slice_orientation,
+                #     'Режим визуализации (Т1, Т2 и др.)': modality,
+                #     'Толщина среза, Т': slice_thickness,
+                #     'Значение поля (T)': magnetic_field_strength,
+                #     'body_part': body_part,
+                #     'study_description': study_description,
+                # })
 
                 # Конвертация в PNG и сохранение в соответствующей директории
                 # output_subdir = os.path.join(output_dir, slice_orientation)
@@ -199,5 +216,10 @@ def process_dicom_files(directories, output_excel='dicom_info.xlsx', output_dir=
     print(f"Данные сохранены в {output_excel}")
 
 # Запуск интерактивного выбора и обработки
+start_time = datetime.now()
 directories = select_directories()
 process_dicom_files(directories)
+end_time = datetime.now()
+
+execution_time = end_time - start_time
+print(f"Время выполнения скрипта: {execution_time}")
