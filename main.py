@@ -164,6 +164,8 @@ def process_dicom_files(directories, output_excel='dicom_info.xlsx', output_dir=
                 body_part = getattr(ds, 'BodyPartExamined', '').lower()
                 study_description = getattr(ds, 'StudyDescription', '').lower()
 
+                print('Обрабатывается: ', file_path)
+
                 data.append({
                     'Название папки': folder_name,
                     'Расположение снимка (путь)': file_path,
