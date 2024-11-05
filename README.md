@@ -15,7 +15,7 @@ source venv/bin/activate
 ```
 Windows:
 ```shell
-venv/bin/activate
+.\venv\Scripts\Activate
 ```
 
 4) Запуск основного скрипта
