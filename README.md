@@ -31,7 +31,7 @@ pip install requirements.txt
   
   Windows:
 ```shell
-python -m pip install requirements.txt
+python -m pip install -r requirements.txt
 ```
 
 4) Запуск основного скрипта
