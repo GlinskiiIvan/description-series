@@ -4,6 +4,7 @@
 ```shell
 python3 -m venv venv
 ```
+
   Windows:
 ```shell
 python -m venv venv
@@ -15,6 +16,7 @@ python -m venv venv
 ```shell
 source venv/bin/activate
 ```
+  
   Windows:
 ```shell
 .\venv\Scripts\Activate
@@ -26,6 +28,7 @@ source venv/bin/activate
 ```shell
 pip install requirements.txt    
 ```
+  
   Windows:
 ```shell
 python -m pip install requirements.txt
@@ -37,6 +40,7 @@ python -m pip install requirements.txt
 ```shell
 python3 main.py
 ```
+  
   Windows:
 ```shell
 python main.py
