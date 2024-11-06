@@ -1,4 +1,5 @@
 1) Создание окружения, если не создано
+
    Linux:
 ```shell
 python3 -m venv venv
@@ -9,7 +10,8 @@ python -m venv venv
 ```
 
 2) Активация окружения 
-  Linux:
+
+   Linux:
 ```shell
 source venv/bin/activate
 ```
@@ -19,6 +21,7 @@ source venv/bin/activate
 ```
 
 3) Установка зависимостей
+
    linux:
 ```shell
 pip install requirements.txt    
@@ -29,7 +32,8 @@ python -m pip install requirements.txt
 ```
 
 4) Запуск основного скрипта
-     Linux:
+
+   Linux:
 ```shell
 python3 main.py
 ```
