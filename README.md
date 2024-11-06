@@ -5,7 +5,7 @@
 python3 -m venv venv
 ```
 
-  Windows:
+     Windows:
 ```shell
 python -m venv venv
 ```
