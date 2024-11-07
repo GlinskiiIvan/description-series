@@ -1,16 +1,36 @@
 import pydicom
 
-ds = pydicom.dcmread('/home/brodyga/Загрузки/test/0001. Абдибеков/20231225/S_29535/139373/1393730007.dcm')
+ds = pydicom.dcmread('/home/brodyga/Загрузки/test/0002. Абдиева Севара/до опер/abdiyeva/DICOM/PA000000/ST000001/SE000001/IM000000')
+
+# Функция для выбора основной директории и возвращения списка её подпапок
+def select_file():
+    file = input("Введите путь к DICOM-файлу: ").strip().strip("'\"")  # Убираем кавычки вокруг пути, если они есть
+
+    # Проверяем, что директории найдены
+    if not file:
+        return select_file()
+    
+    return file
+
 # print(dir(ds))
 
 # for element in ds:
 #     print(f"{element.tag} - {element.name}: {element.value}")
 
-for element in ds:
-    value = element.value
-    if isinstance(value, bytes):
-        continue  # пропуск байтовых данных
-    print(f"{element.tag} - {element.name}: {value}")
+# ds = pydicom.dcmread('/home/brodyga/Загрузки/test/0002. Абдиева Севара/до опер/abdiyeva/DICOM/PA000000/ST000001/SE000001/IM000000')
+# for element in ds:
+#     value = element.value
+#     if isinstance(value, bytes):
+#         continue  # пропуск байтовых данных
+#     print(f"{element.tag} - {element.name}: {value}")
+
+def get_attrs(file):
+    ds = pydicom.dcmread(file)
+    for element in ds:
+        value = element.value
+        if isinstance(value, bytes):
+            continue  # пропуск байтовых данных
+        print(f"{element.tag} - {element.name}: {value}")
 
 # for element in ds:
 #     value = element.value
@@ -20,3 +40,6 @@ for element in ds:
 #         except UnicodeDecodeError:
 #             value = "Не удалось декодировать"
 #     print(f"{element.tag} - {element.name}: {value}")
+
+file = select_file()
+get_attrs(file)
