@@ -164,39 +164,46 @@ def process_dicom_files(directories, output_excel='dicom_info.xlsx', output_dir=
                 # Проверка, что изображение относится к колену
                 body_part = getattr(ds, 'BodyPartExamined', '').lower()
                 study_description = getattr(ds, 'StudyDescription', '').lower()
+                Performed_Procedure_Step_escription = getattr(ds, 'PerformedProcedureStepDescription', '').lower()
 
                 print('Обрабатывается: ', file_path)
 
-                if not('knee' in body_part) and not('ankle' in body_part) and not('knee' in study_description) and not('ks' in study_description) and not('kolen' in study_description):
-                    data.append({
-                        'Название папки': folder_name,
-                        'Расположение снимка (путь)': file_path,
-                        'Дата снимка': study_date,
-                        # 'Номер серии': series_number,
-                        'Количество серии': len(file_list),
-                        'Название МРТ снимка': series_description,
-                        'Использование плоскостей': slice_orientation,
-                        'Режим визуализации (Т1, Т2 и др.)': modality,
-                        'Толщина среза, Т': slice_thickness,
-                        'Значение поля (T)': magnetic_field_strength,
-                        'body_part': body_part,
-                        'study_description': study_description,
-                    })
+                # if not('knee' in body_part) and not('ankle' in body_part) and not('knee' in study_description) and not('ks' in study_description) and not('kolen' in study_description) and not('kalen' in study_description) and not('kolan' in study_description) and not('kalan' in study_description):
+                #     data.append({
+                #         'Название папки': folder_name,
+                #         'Расположение снимка (путь)': file_path,
+                #         'Дата снимка': study_date,
+                #         # 'Номер серии': series_number,
+                #         'Количество серии': len(file_list),
+                #         'Название МРТ снимка': series_description,
+                #         'Использование плоскостей': slice_orientation,
+                #         'Режим визуализации (Т1, Т2 и др.)': modality,
+                #         'Толщина среза, Т': slice_thickness,
+                #         'Значение поля (T)': magnetic_field_strength,
+                #         'body_part': body_part,
+                #         'study_description': study_description,
+                #     })
 
-                # data.append({
-                #     'Название папки': folder_name,
-                #     'Расположение снимка (путь)': file_path,
-                #     'Дата снимка': study_date,
-                #     # 'Номер серии': series_number,
-                #     'Количество серии': len(file_list),
-                #     'Название МРТ снимка': series_description,
-                #     'Использование плоскостей': slice_orientation,
-                #     'Режим визуализации (Т1, Т2 и др.)': modality,
-                #     'Толщина среза, Т': slice_thickness,
-                #     'Значение поля (T)': magnetic_field_strength,
-                #     'body_part': body_part,
-                #     'study_description': study_description,
-                # })
+                if ('knee' in body_part) or ('ankle' in body_part) or ('knee' in study_description) or ('ks' in study_description) or ('kolen' in study_description) or ('kalen' in study_description) or ('kolan' in study_description) or ('kalan' in study_description):
+                    if not ('localizer' in series_description.lower()) and not ('default' in series_description.lower()) and not ('survey' in series_description.lower()):
+                        data.append({
+                            'Название папки': folder_name,
+                            'Расположение снимка (путь)': file_path,
+                            'Дата снимка': study_date,
+                            # 'Номер серии': series_number,
+                            'Количество серии': len(file_list),
+                            'Название МРТ снимка': series_description,
+                            'Использование плоскостей': slice_orientation,
+                            'Режим визуализации (Т1, Т2 и др.)': modality,
+                            'Толщина среза, Т': slice_thickness,
+                            'Значение поля (T)': magnetic_field_strength,
+                            'body_part': body_part,
+                            'study_description': study_description,
+                        })
+                        # Конвертация в PNG и сохранение в соответствующей директории
+                        output_subdir = os.path.join(output_dir, slice_orientation)
+                        for dicom_file in file_list:
+                            convert_dicom_to_png(dicom_dir, dicom_file, output_subdir)
 
                 # Конвертация в PNG и сохранение в соответствующей директории
                 # output_subdir = os.path.join(output_dir, slice_orientation)
