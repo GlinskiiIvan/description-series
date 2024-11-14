@@ -6,6 +6,7 @@ from collections import defaultdict
 from PIL import Image
 import numpy as np
 from datetime import datetime
+import re
 
 # Укажите директорию с DICOM-файлами
 output_excel = 'dicom_info.xlsx'
@@ -69,23 +70,6 @@ def format_date(dicom_date):
     except ValueError:
         return 'N/A'
 
-# Функция для получения типа визуализации
-def get_modality_type(modality):
-    if 't1*' in modality.lower():
-        return 'Т1*'
-    if 't1' in modality.lower():
-        return 'Т1'
-    elif 't2*' in modality.lower():
-        return 'Т2*'
-    elif 't2' in modality.lower():
-        return 'Т2'
-    elif 'localizer*' in modality.lower():
-        return 'localizer*'
-    elif 'localizer' in modality.lower():
-        return 'localizer'
-    else:
-        return modality
-
 # Функция для конвертации DICOM в PNG с нормализацией яркости
 def convert_dicom_to_png(dicom_dir, dicom_path, output_dir):
     patient_number = os.path.basename(dicom_dir)
@@ -107,6 +91,33 @@ def convert_dicom_to_png(dicom_dir, dicom_path, output_dir):
     
     img.save(output_path)
     print(f"Сохранено: {output_path}")
+
+# Функция для получения стандартизированного типа визуализации
+def parse_modality(modality_str):
+    modality_str = modality_str.lower()
+
+    if 't1' in modality_str:
+        return 'T1W' if 't1w' in modality_str else 'T1'
+    elif 't2' in modality_str:
+        return 'T2W' if 't2w' in modality_str else ('T2*' if 't2*' in modality_str else 'T2')
+    elif 'pd' in modality_str:
+        return 'SPDW' if 'spdw' in modality_str else ('PDW' if 'pdw' in modality_str else 'PD')
+    elif 'stir' in modality_str:
+        return 'STIR'
+    elif 'flair' in modality_str:
+        return 'FLAIR'
+
+    else:
+        return modality_str
+        
+# Функция для проверки части тела на колено
+def is_knee(body_part, study_description):
+    return ('knee' in body_part) or ('ankle' in body_part) or ('knee' in study_description) or ('ks' in study_description) or ('kolen' in study_description) or ('kalen' in study_description) or ('kolan' in study_description) or ('kalan' in study_description)
+
+# Функция для проверки режима визуализации
+# T1/T2/PD/STIR/FLAIR
+def is_allowed_mode(series_description):
+    return ('t1' in series_description) or ('t2' in series_description) or ('pd' in series_description) or ('stir' in series_description) or ('flair' in series_description)
 
 # Основная функция обработки DICOM файлов
 def process_dicom_files(directories, output_excel='dicom_info.xlsx', output_dir='sorted_images'):
@@ -151,13 +162,14 @@ def process_dicom_files(directories, output_excel='dicom_info.xlsx', output_dir=
 
                 study_date = format_date(getattr(ds, 'StudyDate', 'N/A'))                # Дата снимка
                 series_number = getattr(ds, 'SeriesNumber', 'N/A')          # Номер серии
-                series_description = getattr(ds, 'SeriesDescription', 'N/A') # Название МРТ снимка
+                series_description = getattr(ds, 'SeriesDescription', 'N/A').lower() # Название МРТ снимка
                 orientation = getattr(ds, 'ImageOrientationPatient', None)
                 if orientation:
                     slice_orientation = get_slice_orientation([round(val) for val in orientation])
                 else:
                     slice_orientation = 'N/A'        
-                modality = get_modality_type(getattr(ds, 'ProtocolName', 'N/A'))                   # Режим визуализации (Т1, Т2 и др.)
+                # modality = get_modality_type(getattr(ds, 'ProtocolName', 'N/A'))                   # Режим визуализации (Т1, Т2 и др.)
+                modality = parse_modality(series_description)                   # Режим визуализации (Т1, Т2 и др.)
                 slice_thickness = getattr(ds, 'SliceThickness', 'N/A')      # Толщина среза
                 magnetic_field_strength = getattr(ds, 'MagneticFieldStrength', 'N/A')  # Значение поля, Т
 
@@ -168,24 +180,10 @@ def process_dicom_files(directories, output_excel='dicom_info.xlsx', output_dir=
 
                 print('Обрабатывается: ', file_path)
 
-                # if not('knee' in body_part) and not('ankle' in body_part) and not('knee' in study_description) and not('ks' in study_description) and not('kolen' in study_description) and not('kalen' in study_description) and not('kolan' in study_description) and not('kalan' in study_description):
-                #     data.append({
-                #         'Название папки': folder_name,
-                #         'Расположение снимка (путь)': file_path,
-                #         'Дата снимка': study_date,
-                #         # 'Номер серии': series_number,
-                #         'Количество серии': len(file_list),
-                #         'Название МРТ снимка': series_description,
-                #         'Использование плоскостей': slice_orientation,
-                #         'Режим визуализации (Т1, Т2 и др.)': modality,
-                #         'Толщина среза, Т': slice_thickness,
-                #         'Значение поля (T)': magnetic_field_strength,
-                #         'body_part': body_part,
-                #         'study_description': study_description,
-                #     })
-
-                if ('knee' in body_part) or ('ankle' in body_part) or ('knee' in study_description) or ('ks' in study_description) or ('kolen' in study_description) or ('kalen' in study_description) or ('kolan' in study_description) or ('kalan' in study_description):
-                    if not ('localizer' in series_description.lower()) and not ('default' in series_description.lower()) and not ('survey' in series_description.lower()):
+                # if ('knee' in body_part) or ('ankle' in body_part) or ('knee' in study_description) or ('ks' in study_description) or ('kolen' in study_description) or ('kalen' in study_description) or ('kolan' in study_description) or ('kalan' in study_description):
+                if is_knee(body_part, study_description):
+                    # if not ('localizer' in series_description.lower()) and not ('default' in series_description.lower()) and not ('survey' in series_description.lower()) and not ('screen' in series_description.lower()) and not ('plane' in series_description.lower()) and not ('calibration' in series_description.lower()):
+                    if is_allowed_mode(series_description):
                         data.append({
                             'Название папки': folder_name,
                             'Расположение снимка (путь)': file_path,
@@ -201,9 +199,9 @@ def process_dicom_files(directories, output_excel='dicom_info.xlsx', output_dir=
                             'study_description': study_description,
                         })
                         # Конвертация в PNG и сохранение в соответствующей директории
-                        output_subdir = os.path.join(output_dir, slice_orientation)
-                        for dicom_file in file_list:
-                            convert_dicom_to_png(dicom_dir, dicom_file, output_subdir)
+                        # output_subdir = os.path.join(output_dir, slice_orientation)
+                        # for dicom_file in file_list:
+                        #     convert_dicom_to_png(dicom_dir, dicom_file, output_subdir)
 
                 # Конвертация в PNG и сохранение в соответствующей директории
                 # output_subdir = os.path.join(output_dir, slice_orientation)
