@@ -11,22 +11,6 @@ import re
 # Укажите директорию с DICOM-файлами
 output_excel = 'dicom_info.xlsx'
 
-# Функция для интерактивного выбора директорий
-# def select_directories():
-#     print("Вы можете выбрать один или несколько путей к директориям, разделяя их запятыми.")
-#     directories_input = input("Введите пути к директориям с DICOM файлами: ")
-    
-#     # Убираем лишние кавычки и пробелы из каждого пути
-#     directories = [dir.strip().strip("'\"") for dir in directories_input.split(',')]
-    
-#     # Оставляем только существующие директории
-#     directories = [dir for dir in directories if os.path.isdir(dir)]
-    
-#     if not directories:
-#         print("Не удалось найти корректные директории. Повторите попытку.")
-#         return select_directories()
-#     return directories
-
 # Функция для выбора основной директории и возвращения списка её подпапок
 def select_directories():
     main_directory = input("Введите путь к основной директории с DICOM-папками: ").strip().strip("'\"")
@@ -71,7 +55,7 @@ def format_date(dicom_date):
         return 'N/A'
 
 # Функция для конвертации DICOM в PNG с нормализацией яркости
-def convert_dicom_to_png(dicom_dir, dicom_path, output_dir):
+def convert_dicom_to_png(dicom_dir, dicom_path, output_dir, modality, slice_orientation):
     patient_number = os.path.basename(dicom_dir)
     # Чтение DICOM файла
     ds = pydicom.dcmread(dicom_path)
@@ -84,10 +68,15 @@ def convert_dicom_to_png(dicom_dir, dicom_path, output_dir):
     
     # Создание изображения и сохранение в формате PNG
     img = Image.fromarray(image_data)
+
+    # Создание конечного пути для сохранения изображения
+    output_subdir = os.path.join(output_dir, patient_number, modality, slice_orientation)
+    os.makedirs(output_subdir, exist_ok=True)
     
     # Генерация имени файла без расширения .dcm
-    filename = patient_number + "-" + series_number + "-" +  os.path.splitext(os.path.basename(dicom_path))[0] + ".png"
-    output_path = os.path.join(output_dir, filename)
+    # filename = patient_number + "-" + series_number + "-" +  os.path.splitext(os.path.basename(dicom_path))[0] + ".png"
+    filename = f"{patient_number}-{series_number}-{os.path.splitext(os.path.basename(dicom_path))[0]}.png"
+    output_path = os.path.join(output_subdir, filename)
     
     img.save(output_path)
     print(f"Сохранено: {output_path}")
@@ -97,11 +86,11 @@ def parse_modality(modality_str):
     modality_str = modality_str.lower()
 
     if 't1' in modality_str:
-        return 'T1W' if 't1w' in modality_str else 'T1'
+        return 'T1'
     elif 't2' in modality_str:
-        return 'T2W' if 't2w' in modality_str else ('T2*' if 't2*' in modality_str else 'T2')
+        return 'T2*' if 't2*' in modality_str else 'T2'
     elif 'pd' in modality_str:
-        return 'SPDW' if 'spdw' in modality_str else ('PDW' if 'pdw' in modality_str else 'PD')
+        return 'PD'
     elif 'stir' in modality_str:
         return 'STIR'
     elif 'flair' in modality_str:
@@ -122,9 +111,10 @@ def is_allowed_mode(series_description):
 # Основная функция обработки DICOM файлов
 def process_dicom_files(directories, output_excel='dicom_info.xlsx', output_dir='sorted_images'):
     # Создаем директории для PNG изображений
-    os.makedirs(os.path.join(output_dir, 'аксиальная'), exist_ok=True)
-    os.makedirs(os.path.join(output_dir, 'сагиттальная'), exist_ok=True)
-    os.makedirs(os.path.join(output_dir, 'корональная'), exist_ok=True)
+    # os.makedirs(os.path.join(output_dir, 'аксиальная'), exist_ok=True)
+    # os.makedirs(os.path.join(output_dir, 'сагиттальная'), exist_ok=True)
+    # os.makedirs(os.path.join(output_dir, 'корональная'), exist_ok=True)
+    os.makedirs(output_dir, exist_ok=True)
 
     data = []
 
@@ -199,14 +189,9 @@ def process_dicom_files(directories, output_excel='dicom_info.xlsx', output_dir=
                             'study_description': study_description,
                         })
                         # Конвертация в PNG и сохранение в соответствующей директории
-                        # output_subdir = os.path.join(output_dir, slice_orientation)
-                        # for dicom_file in file_list:
-                        #     convert_dicom_to_png(dicom_dir, dicom_file, output_subdir)
-
-                # Конвертация в PNG и сохранение в соответствующей директории
-                # output_subdir = os.path.join(output_dir, slice_orientation)
-                # for dicom_file in file_list:
-                #     convert_dicom_to_png(dicom_dir, dicom_file, output_subdir)
+                        output_subdir = os.path.join(output_dir, slice_orientation)
+                        for dicom_file in file_list:
+                            convert_dicom_to_png(dicom_dir, dicom_file, output_dir, modality, slice_orientation)
             except Exception as e:
                 print(f"Ошибка при обработке {first_file}: {e}")
 
