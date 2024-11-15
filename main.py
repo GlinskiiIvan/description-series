@@ -39,13 +39,16 @@ def select_directories():
 
 # Функция для определения ориентации
 def get_slice_orientation(orientation):
+    # Округление значений
+    orientation = [round(val, 3) for val in orientation]
+
     if orientation == [1, 0, 0, 0, 1, 0]:
         return 'аксиальная'
     elif orientation == [0, 1, 0, 0, 0, -1]:
         return 'сагиттальная'
     elif orientation == [1, 0, 0, 0, 0, -1]:
         return 'корональная'
-    return 'неизвестно'
+    return 'косой срез'
 
 # Функция для преобразования даты
 def format_date(dicom_date):
@@ -158,7 +161,6 @@ def process_dicom_files(directories, output_excel='dicom_info.xlsx', output_dir=
                     slice_orientation = get_slice_orientation([round(val) for val in orientation])
                 else:
                     slice_orientation = 'N/A'        
-                # modality = get_modality_type(getattr(ds, 'ProtocolName', 'N/A'))                   # Режим визуализации (Т1, Т2 и др.)
                 modality = parse_modality(series_description)                   # Режим визуализации (Т1, Т2 и др.)
                 slice_thickness = getattr(ds, 'SliceThickness', 'N/A')      # Толщина среза
                 magnetic_field_strength = getattr(ds, 'MagneticFieldStrength', 'N/A')  # Значение поля, Т
@@ -170,9 +172,7 @@ def process_dicom_files(directories, output_excel='dicom_info.xlsx', output_dir=
 
                 print('Обрабатывается: ', file_path)
 
-                # if ('knee' in body_part) or ('ankle' in body_part) or ('knee' in study_description) or ('ks' in study_description) or ('kolen' in study_description) or ('kalen' in study_description) or ('kolan' in study_description) or ('kalan' in study_description):
                 if is_knee(body_part, study_description):
-                    # if not ('localizer' in series_description.lower()) and not ('default' in series_description.lower()) and not ('survey' in series_description.lower()) and not ('screen' in series_description.lower()) and not ('plane' in series_description.lower()) and not ('calibration' in series_description.lower()):
                     if is_allowed_mode(series_description):
                         data.append({
                             'Название папки': folder_name,
@@ -182,6 +182,7 @@ def process_dicom_files(directories, output_excel='dicom_info.xlsx', output_dir=
                             'Количество серии': len(file_list),
                             'Название МРТ снимка': series_description,
                             'Использование плоскостей': slice_orientation,
+                            'Значение плоскости': orientation,
                             'Режим визуализации (Т1, Т2 и др.)': modality,
                             'Толщина среза, Т': slice_thickness,
                             'Значение поля (T)': magnetic_field_strength,
