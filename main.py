@@ -70,7 +70,7 @@ def format_date(dicom_date):
         return 'N/A'
 
 # Функция для конвертации DICOM в PNG с нормализацией яркости
-def convert_dicom_to_png(dicom_dir, dicom_path, output_dir, modality, slice_orientation, apply_clahe=True, apply_laplacian=True):
+def convert_dicom_to_png(dicom_dir, dicom_path, output_dir, modality, slice_orientation, methods, apply_clahe=True, apply_laplacian=True):
     # Чтение DICOM файла
     ds = pydicom.dcmread(dicom_path)
     image_data = ds.pixel_array
@@ -97,7 +97,9 @@ def convert_dicom_to_png(dicom_dir, dicom_path, output_dir, modality, slice_orie
     img = Image.fromarray(image_data)
 
     # Создание конечного пути для сохранения изображения
-    output_subdir = os.path.join(output_dir, patient_number, modality, slice_orientation)
+    # output_subdir = os.path.join(output_dir, patient_number, modality, slice_orientation, '-'.join(methods))
+    # output_subdir = os.path.join(output_dir, modality, slice_orientation, '-'.join(methods))
+    output_subdir = os.path.join(output_dir, modality, '-'.join(methods))
     os.makedirs(output_subdir, exist_ok=True)
     
     # Генерация имени файла без расширения .dcm
@@ -155,31 +157,6 @@ def is_allowed_mode(series_description):
 # FS/FSE/TSE...
 def is_allowed_dop_mode(series_description):
     return ('fse' in series_description) or ('tse' in series_description) or ('rse' in series_description) or ('fs' in series_description) or ('se' in series_description) or ('spair' in series_description)
-
-# def extract_methods_from_name(image_name: str) -> List[str]:
-#     # Словарь методов визуализации с уточнением шаблонов
-#     methods = {
-#         "FSE": r"_fse_",
-#         "TSE": r"_tse_",
-#         "STIR": r"_stir_",
-#         "SPAIR": r"_spair_",
-#         "FS": r"_fs_",
-#         "GRE": r"_gre_",
-#         "IR": r"_ir_",
-#         "FRFSE": r"_frfse_",
-#         "PROP": r"_prop_",
-#         "TIRM": r"_tirm_",
-#         "DIXON": r"_dixon_",
-#         "SE": r"_se_"
-#     }
-
-#     # Приведение строки к нижнему регистру
-#     image_name = image_name.lower()
-
-#     # Поиск совпадений
-#     detected_methods = [method for method, pattern in methods.items() if re.search(pattern, image_name)]
-    
-#     return detected_methods
 
 def extract_methods_from_name(image_name: str) -> List[str]:
     # Словарь методов визуализации с уточнением шаблонов
@@ -268,7 +245,7 @@ def process_dicom_files(directories, output_excel='dicom_info.xlsx', output_dir=
                 study_description = getattr(ds, 'StudyDescription', '').lower()
                 Performed_Procedure_Step_escription = getattr(ds, 'PerformedProcedureStepDescription', '').lower()
 
-                dop_methods = extract_methods_from_name(series_description)
+                methods = extract_methods_from_name(series_description)
 
                 print('Обрабатывается: ', file_path)
 
@@ -286,7 +263,7 @@ def process_dicom_files(directories, output_excel='dicom_info.xlsx', output_dir=
                                 'Использование плоскостей из названия снимка (N/a)': '',
                                 'Значение плоскости': orientation,
                                 'Режим визуализации (Т1, Т2 и др.)': modality,
-                                'Доп методы': dop_methods,
+                                'Доп методы': methods,
                                 'Толщина среза, Т': slice_thickness,
                                 'Значение поля (T)': magnetic_field_strength,
                                 'body_part': body_part,
@@ -305,7 +282,7 @@ def process_dicom_files(directories, output_excel='dicom_info.xlsx', output_dir=
                                 'Использование плоскостей из названия снимка (N/a)': slice_orientation,
                                 'Значение плоскости': orientation,
                                 'Режим визуализации (Т1, Т2 и др.)': modality,
-                                'Доп методы': dop_methods,
+                                'Доп методы': methods,
                                 'Толщина среза, Т': slice_thickness,
                                 'Значение поля (T)': magnetic_field_strength,
                                 'body_part': body_part,
@@ -315,9 +292,8 @@ def process_dicom_files(directories, output_excel='dicom_info.xlsx', output_dir=
                             
             
                         # Конвертация в PNG и сохранение в соответствующей директории
-                        # output_subdir = os.path.join(output_dir, slice_orientation)
-                        # for dicom_file in file_list:
-                        #     convert_dicom_to_png(dicom_dir, dicom_file, output_dir, modality, slice_orientation, False, False)
+                        for dicom_file in file_list:
+                            convert_dicom_to_png(dicom_dir, dicom_file, output_dir, modality, slice_orientation, methods, False, False)
             except Exception as e:
                 print(f"Ошибка при обработке {first_file}: {e}")
 
