@@ -13,6 +13,10 @@ import cv2
 import warnings
 warnings.filterwarnings("ignore", message="Invalid value for VR UI")
 
+from pydicom import config
+# Разрешить некорректные значения
+config.allow_invalid_values = True
+
 
 # Укажите директорию с DICOM-файлами
 output_excel = 'dicom_info.xlsx'
