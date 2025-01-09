@@ -1,6 +1,6 @@
 import pydicom
 
-ds = pydicom.dcmread('/home/brodyga/Загрузки/test/0002. Абдиева Севара/до опер/abdiyeva/DICOM/PA000000/ST000001/SE000001/IM000000')
+# ds = pydicom.dcmread('/home/brodyga/Загрузки/test/0002. Абдиева Севара/до опер/abdiyeva/DICOM/PA000000/ST000001/SE000001/IM000000')
 
 # Функция для выбора основной директории и возвращения списка её подпапок
 def select_file():
@@ -12,18 +12,6 @@ def select_file():
     
     return file
 
-# print(dir(ds))
-
-# for element in ds:
-#     print(f"{element.tag} - {element.name}: {element.value}")
-
-# ds = pydicom.dcmread('/home/brodyga/Загрузки/test/0002. Абдиева Севара/до опер/abdiyeva/DICOM/PA000000/ST000001/SE000001/IM000000')
-# for element in ds:
-#     value = element.value
-#     if isinstance(value, bytes):
-#         continue  # пропуск байтовых данных
-#     print(f"{element.tag} - {element.name}: {value}")
-
 def get_attrs(file):
     ds = pydicom.dcmread(file)
     for element in ds:
@@ -32,14 +20,26 @@ def get_attrs(file):
             continue  # пропуск байтовых данных
         print(f"{element.tag} - {element.name}: {value}")
 
-# for element in ds:
-#     value = element.value
-#     if isinstance(value, bytes):
-#         try:
-#             value = value.decode('utf-8')  # попробуйте 'iso8859-1' или 'utf-16', если utf-8 не подходит
-#         except UnicodeDecodeError:
-#             value = "Не удалось декодировать"
-#     print(f"{element.tag} - {element.name}: {value}")
+def extract_methods_from_dicom(file_path):
+    ds = pydicom.dcmread(file_path)
+
+    methods = []
+    # Читаем ключевые атрибуты
+    if "SequenceVariant" in ds:
+        methods.append(ds.SequenceVariant)
+    if "ScanOptions" in ds:
+        methods.append(ds.ScanOptions)
+    if "SequenceName" in ds:
+        methods.append(ds.SequenceName)
+    if "PulseSequenceName" in ds:
+        methods.append(ds.PulseSequenceName)
+    if "ImageType" in ds:
+        methods.extend(ds.ImageType)
+
+    # Объединяем и фильтруем уникальные методы
+    methods = [str(method).strip() for method in methods if method]
+    return list(set(methods))
 
 file = select_file()
-get_attrs(file)
+# get_attrs(file)
+print(extract_methods_from_dicom(file))

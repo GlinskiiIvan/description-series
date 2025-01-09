@@ -98,8 +98,8 @@ def convert_dicom_to_png(dicom_dir, dicom_path, output_dir, modality, slice_orie
 
     # Создание конечного пути для сохранения изображения
     # output_subdir = os.path.join(output_dir, patient_number, modality, slice_orientation, '-'.join(methods))
-    # output_subdir = os.path.join(output_dir, modality, slice_orientation, '-'.join(methods))
-    output_subdir = os.path.join(output_dir, modality, '-'.join(methods))
+    output_subdir = os.path.join(output_dir, modality, slice_orientation, '-'.join(methods))
+    # output_subdir = os.path.join(output_dir, modality, '-'.join(methods))
     os.makedirs(output_subdir, exist_ok=True)
     
     # Генерация имени файла без расширения .dcm
@@ -151,33 +151,42 @@ def is_knee(body_part, study_description):
 # Функция для проверки режима визуализации
 # T1/T2/PD/STIR/FLAIR
 def is_allowed_mode(series_description):
-    return ('t1' in series_description) or ('t2' in series_description) or ('pd' in series_description) or ('stir' in series_description) or ('flair' in series_description)
+    return ('t1' in series_description) or ('t2' in series_description) or ('pd' in series_description)
+    # return ('t1' in series_description) or ('t2' in series_description) or ('pd' in series_description) or ('stir' in series_description) or ('flair' in series_description)
 
 # Функция для проверки дополнительного режима
 # FS/FSE/TSE...
 def is_allowed_dop_mode(series_description):
-    return ('fse' in series_description) or ('tse' in series_description) or ('rse' in series_description) or ('fs' in series_description) or ('se' in series_description) or ('spair' in series_description)
+    return ('FSE' in series_description) or ('TSE' in series_description) or ('FS' in series_description) or ('FSAT' in series_description) or ('FATSAT' in series_description) or ('SE' in series_description)
+    # return ('fse' in series_description) or ('tse' in series_description) or ('rse' in series_description) or ('fs' in series_description) or ('se' in series_description) or ('spair' in series_description)
 
 def extract_methods_from_name(image_name: str) -> List[str]:
     # Словарь методов визуализации с уточнением шаблонов
     methods = {
         "FSE": r"(?:_|^| )fse(?:_| |$)", 
+        # "FFE": r"(?:_|^| )ffe(?:_| |$)", 
+        # "IRFFE": r"(?:_|^| )irffe(?:_| |$)", 
         "TSE": r"(?:_|^| )tse(?:_| |$)",  
-        "ATSE": r"(?:_|^| )atse(?:_| |$)",  
-        "STIR": r"(?:_|^| )stir(?:_| |$)",  
-        "SPIR": r"(?:_|^| )spir(?:_| |$)",  
-        "SPAIR": r"(?:_|^| )spair(?:_| |$)",  
+        # "IR-TSE": r"(?:_|^| )ir-tse(?:_| |$)",  
+        # "ATSE": r"(?:_|^| )atse(?:_| |$)",  
+        # "STIR": r"(?:_|^| )stir(?:_| |$)",  
+        # "SPIR": r"(?:_|^| )spir(?:_| |$)",  
+        # "SPAIR": r"(?:_|^| )spair(?:_| |$)",  
         "FS": r"(?:_|^| )fs(?:_| |$)",  
         "FSAT": r"(?:_|^| )fsat(?:_| |$)",  
+        # "FSIR": r"(?:_|^| )fsir(?:_| |$)",  
         "FATSAT": r"(?:_|^| )fatsat(?:_| |$)",  
-        "SPAIR": r"(?:_|^| )spair(?:_| |$)",  
-        "GRE": r"(?:_|^| )gre(?:_| |$)",  
-        "GRE2D": r"(?:_|^| )gre2d(?:_| |$)",  
-        "IR": r"(?:_|^| )ir(?:_| |$)",  
-        "FRFSE": r"(?:_|^| )frfse(?:_| |$)",  
-        "PROP": r"(?:_|^| )prop(?:_| |$)",  
-        "TIRM": r"(?:_|^| )tirm(?:_| |$)",  
-        "DIXON": r"(?:_|^| )dixon(?:_| |$)",  
+        "FATSAT": r"(?:_|^| )fat sat(?:_| |$)",  
+        # "FAT": r"(?:_|^| )fat(?:_| |$)",  
+        # "FGRE": r"(?:_|^| )fgre(?:_| |$)",  
+        # "GRE": r"(?:_|^| )gre(?:_| |$)",  
+        # "GRE2D": r"(?:_|^| )gre2d(?:_| |$)",  
+        # "IR": r"(?:_|^| )ir(?:_| |$)",  
+        # "FRFSE": r"(?:_|^| )frfse(?:_| |$)",  
+        # "PROP": r"(?:_|^| )prop(?:_| |$)",  
+        # "TIRM": r"(?:_|^| )tirm(?:_| |$)",  
+        # "DIXON": r"(?:_|^| )dixon(?:_| |$)",  
+        # "TRUFI": r"(?:_|^| )trufi(?:_| |$)",  
         "SE": r"(?:_|^| )se(?:_| |$)"  
     }
 
@@ -251,49 +260,50 @@ def process_dicom_files(directories, output_excel='dicom_info.xlsx', output_dir=
 
                 if is_knee(body_part, study_description):
                     if is_allowed_mode(series_description):
-                        if slice_orientation != 'N/A':
-                            data.append({
-                                'Название папки': folder_name,
-                                'Расположение снимка (путь)': file_path,
-                                'Дата снимка': study_date,
-                                # 'Номер серии': series_number,
-                                'Количество серии': len(file_list),
-                                'Название МРТ снимка': series_description,
-                                'Использование плоскостей': slice_orientation,
-                                'Использование плоскостей из названия снимка (N/a)': '',
-                                'Значение плоскости': orientation,
-                                'Режим визуализации (Т1, Т2 и др.)': modality,
-                                'Доп методы': methods,
-                                'Толщина среза, Т': slice_thickness,
-                                'Значение поля (T)': magnetic_field_strength,
-                                'body_part': body_part,
-                                'study_description': study_description,
-                            })
-                        if slice_orientation == 'N/A':
-                            slice_orientation = get_slice_orientation_from_series_description(series_description)
-                            data.append({
-                                'Название папки': folder_name,
-                                'Расположение снимка (путь)': file_path,
-                                'Дата снимка': study_date,
-                                # 'Номер серии': series_number,
-                                'Количество серии': len(file_list),
-                                'Название МРТ снимка': series_description,
-                                'Использование плоскостей': '',
-                                'Использование плоскостей из названия снимка (N/a)': slice_orientation,
-                                'Значение плоскости': orientation,
-                                'Режим визуализации (Т1, Т2 и др.)': modality,
-                                'Доп методы': methods,
-                                'Толщина среза, Т': slice_thickness,
-                                'Значение поля (T)': magnetic_field_strength,
-                                'body_part': body_part,
-                                'study_description': study_description,
-                            })
+                        if is_allowed_dop_mode(methods):
+                            if slice_orientation != 'N/A':
+                                data.append({
+                                    'Название папки': folder_name,
+                                    'Расположение снимка (путь)': file_path,
+                                    'Дата снимка': study_date,
+                                    # 'Номер серии': series_number,
+                                    'Количество серии': len(file_list),
+                                    'Название МРТ снимка': series_description,
+                                    'Использование плоскостей': slice_orientation,
+                                    'Использование плоскостей из названия снимка (N/a)': '',
+                                    'Значение плоскости': orientation,
+                                    'Режим визуализации (Т1, Т2 и др.)': modality,
+                                    'Доп методы': methods,
+                                    'Толщина среза, Т': slice_thickness,
+                                    'Значение поля (T)': magnetic_field_strength,
+                                    'body_part': body_part,
+                                    'study_description': study_description,
+                                })
+                            if slice_orientation == 'N/A':
+                                slice_orientation = get_slice_orientation_from_series_description(series_description)
+                                data.append({
+                                    'Название папки': folder_name,
+                                    'Расположение снимка (путь)': file_path,
+                                    'Дата снимка': study_date,
+                                    # 'Номер серии': series_number,
+                                    'Количество серии': len(file_list),
+                                    'Название МРТ снимка': series_description,
+                                    'Использование плоскостей': '',
+                                    'Использование плоскостей из названия снимка (N/a)': slice_orientation,
+                                    'Значение плоскости': orientation,
+                                    'Режим визуализации (Т1, Т2 и др.)': modality,
+                                    'Доп методы': methods,
+                                    'Толщина среза, Т': slice_thickness,
+                                    'Значение поля (T)': magnetic_field_strength,
+                                    'body_part': body_part,
+                                    'study_description': study_description,
+                                })
 
                             
             
-                        # Конвертация в PNG и сохранение в соответствующей директории
-                        for dicom_file in file_list:
-                            convert_dicom_to_png(dicom_dir, dicom_file, output_dir, modality, slice_orientation, methods, False, False)
+                            # Конвертация в PNG и сохранение в соответствующей директории
+                            for dicom_file in file_list:
+                                convert_dicom_to_png(dicom_dir, dicom_file, output_dir, modality, slice_orientation, methods, False, False)
             except Exception as e:
                 print(f"Ошибка при обработке {first_file}: {e}")
 
