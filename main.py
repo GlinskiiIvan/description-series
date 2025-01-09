@@ -299,11 +299,9 @@ def process_dicom_files(directories, output_excel='dicom_info.xlsx', output_dir=
                                     'study_description': study_description,
                                 })
 
-                            
-            
                             # Конвертация в PNG и сохранение в соответствующей директории
-                            for dicom_file in file_list:
-                                convert_dicom_to_png(dicom_dir, dicom_file, output_dir, modality, slice_orientation, methods, False, False)
+                            # for dicom_file in file_list:
+                            #     convert_dicom_to_png(dicom_dir, dicom_file, output_dir, modality, slice_orientation, methods, False, False)
             except Exception as e:
                 print(f"Ошибка при обработке {first_file}: {e}")
 
