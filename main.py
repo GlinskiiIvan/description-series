@@ -9,6 +9,10 @@ from datetime import datetime
 import re
 from typing import List
 import cv2
+from multiprocessing import Pool, cpu_count
+import math
+import tempfile
+import uuid
 
 import warnings
 warnings.filterwarnings("ignore", message="Invalid value for VR UI")
@@ -46,6 +50,10 @@ def select_directories():
     
     return directories
 
+# Функция для разделения списка директорий на поднаборы
+def chunk_directories(directories, num_chunks):
+    chunk_size = math.ceil(len(directories) / num_chunks)
+    return [directories[i:i + chunk_size] for i in range(0, len(directories), chunk_size)]
 
 # Функция для определения ориентации 
 def get_slice_orientation(orientation):
@@ -318,26 +326,66 @@ def process_dicom_files(directories, output_excel='dicom_info.xlsx', output_dir=
                             })
 
                         # Конвертация в PNG и сохранение в соответствующей директории
-                        # for dicom_file in file_list:
-                        #     convert_dicom_to_png(dicom_dir, dicom_file, output_dir, modality, slice_orientation, methods, False, False)
+                        for dicom_file in file_list:
+                            convert_dicom_to_png(dicom_dir, dicom_file, output_dir, modality, slice_orientation, methods, False, False)
             except Exception as e:
                 print(f"Ошибка при обработке {first_file}: {e}")
 
     # Преобразуем данные в DataFrame и сохраняем
     new_df = pd.DataFrame(data)
     if os.path.exists(output_excel):
-        existing_df = pd.read_excel(output_excel)
+        print(f'output_excel: {output_excel}')
+        existing_df = pd.read_excel(output_excel, engine='openpyxl')
         final_df = pd.concat([existing_df, new_df], ignore_index=True)
     else:
         final_df = new_df
-    final_df.to_excel(output_excel, index=False)
+    final_df.to_excel(output_excel, index=False, engine='openpyxl')
     print(f"Данные сохранены в {output_excel}")
 
-# Запуск интерактивного выбора и обработки
-start_time = datetime.now()
-directories = select_directories()
-process_dicom_files(directories)
-end_time = datetime.now()
+# функция для создания временных файлов и запуска основного процесса
+def process_chunk(chunk, output_excel, output_dir):
+    temp_dir = 'temp_files'
+    os.makedirs(temp_dir, exist_ok=True)
+    random_filename = f"{uuid.uuid4().hex}.xlsx"
+    filepath = os.path.join(temp_dir, random_filename)
+    df = pd.DataFrame([])
+    df.to_excel(filepath, index=False, engine='openpyxl')
+    print(f"Временный файл создан: {filepath}")
+    process_dicom_files(chunk, output_excel=filepath, output_dir=output_dir)
+    return filepath
 
-execution_time = end_time - start_time
-print(f"Время выполнения скрипта: {execution_time}")
+# Функция для объедиения временных файлов
+def merge_temp_files(temp_files, final_output):
+    all_data = []
+    for temp_file in temp_files:
+        df = pd.read_excel(temp_file, engine='openpyxl')
+        all_data.append(df)
+        os.remove(temp_file)
+    merged_df = pd.concat(all_data, ignore_index=True)
+    merged_df.to_excel(final_output, index=False, engine='openpyxl')
+
+if __name__ == '__main__':
+    # Запуск интерактивного выбора и обработки
+    start_time = datetime.now()
+
+    directories = select_directories()
+    num_processes = cpu_count()
+    directory_chunks = chunk_directories(directories, num_processes)
+    output_excel = 'dicom_info.xlsx'
+    output_dir = 'sorted_images'
+
+    try:
+        with Pool(processes=num_processes) as pool:
+            temp_files = pool.starmap(
+                process_chunk,
+                [(chunk, output_excel, output_dir) for chunk in directory_chunks]
+            )
+        print("Все процессы завершены, перед объединением временных файлов")
+        merge_temp_files(temp_files, output_excel)
+    except Exception as e:
+        print(f"Ошибка в основном процессе: {e}")
+    
+    end_time = datetime.now()
+    execution_time = end_time - start_time
+    print(f"Время выполнения скрипта: {execution_time}")
+    print(f'Количество задействованных процессов: {num_processes}')
